@@ -4,11 +4,13 @@
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    -webkit-tap-highlight-color: transparent; /* Убирает синюю подсветку при нажатии на Андроиде */
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
+    /* Фон берем из темы телеграма, по умолчанию белый */
     background-color: var(--tg-theme-bg-color, #fff);
+    /* Цвет текста берем из темы телеграма, по умолчанию черный */
     color: var(--tg-theme-text-color, #000);
     padding-bottom: 20px;
 }
@@ -36,6 +38,7 @@ h1 {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* Цвет наследуется от body, то есть будет белым в темной теме */
 }
 
 /* Кнопки в шапке (Назад, Поиск) */
@@ -51,12 +54,12 @@ h1 {
     background: none;
     border: none;
     cursor: pointer;
-    /* ЦВЕТ СТРЕЛКИ И ЛУПЫ - ЧЕРНЫЙ */
-    color: #000000; 
     padding: 0;
+    /* ИСПРАВЛЕНИЕ: Цвет иконки теперь зависит от темы */
+    color: var(--tg-theme-text-color, #000); 
 }
 
-/* Поле поиска (скрыто по умолчанию) */
+/* Поле поиска */
 .search-container {
     position: absolute;
     top: 0;
@@ -64,7 +67,7 @@ h1 {
     width: 100%;
     height: 60px;
     background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-    display: none; /* Скрыто */
+    display: none; 
     align-items: center;
     padding: 0 15px;
     z-index: 101;
@@ -73,11 +76,12 @@ h1 {
 .search-input {
     flex-grow: 1;
     height: 36px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--tg-theme-hint-color, #ddd);
     border-radius: 18px;
     padding: 0 15px;
     font-size: 16px;
     outline: none;
+    /* ИСПРАВЛЕНИЕ: Фон и текст поиска тоже адаптивные */
     background: var(--tg-theme-bg-color, #fff);
     color: var(--tg-theme-text-color, #000);
     margin-right: 10px;
@@ -85,7 +89,8 @@ h1 {
 
 .search-close {
     font-size: 14px;
-    color: #000;
+    /* ИСПРАВЛЕНИЕ: Цвет кнопки отмена */
+    color: var(--tg-theme-text-color, #000);
     cursor: pointer;
     font-weight: 500;
 }
@@ -116,6 +121,7 @@ h1 {
 .card-title {
     font-size: 16px;
     font-weight: 500;
+    /* Цвет наследуется от body */
 }
 
 /* Детальный просмотр */
@@ -141,18 +147,25 @@ h1 {
     font-weight: bold;
     margin-bottom: 8px;
     margin-top: 20px;
+    /* Цвет заголовков секций оставляем синим или берем системный цвет кнопок */
     color: var(--tg-theme-button-color, #2481cc);
 }
 
 .dish-text {
     font-size: 15px;
-    /* Уменьшаем интервал (было 1.5, стало 1.25) */
-    line-height: 1.25; 
-    /* Эта настройка говорит браузеру: "Рисуй текст точно так же, как он написан в Excel" */
-    white-space: pre-wrap; 
-    color: #000;
+    line-height: 1.4;
+    /* ИСПРАВЛЕНИЕ: Цвет текста описания теперь адаптивный */
+    color: var(--tg-theme-text-color, #000);
+}
+
+/* Стиль для жирного текста внутри описания */
+.dish-text b, .dish-text strong {
+    font-weight: 700;
+    /* Жирный текст тоже должен быть адаптивным */
+    color: var(--tg-theme-text-color, #000);
 }
 
 .arrow {
+    /* Цвет стрелочки - серый hint color */
     color: var(--tg-theme-hint-color, #999);
 }
