@@ -4,6 +4,7 @@
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent; /* Убирает синюю подсветку при нажатии на Андроиде */
 }
 
 body {
@@ -12,6 +13,7 @@ body {
     padding-bottom: 20px;
 }
 
+/* Шапка */
 .header {
     padding: 10px 15px;
     background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
@@ -25,13 +27,18 @@ body {
     height: 60px;
 }
 
+/* Заголовок */
 h1 {
     font-size: 18px;
     font-weight: 600;
     text-align: center;
     flex-grow: 1; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+/* Кнопки в шапке (Назад, Поиск) */
 .icon-button, .header-spacer {
     width: 32px; 
     height: 32px;
@@ -44,10 +51,46 @@ h1 {
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--tg-theme-button-color, #2481cc);
+    /* ЦВЕТ СТРЕЛКИ И ЛУПЫ - ЧЕРНЫЙ */
+    color: #000000; 
     padding: 0;
 }
 
+/* Поле поиска (скрыто по умолчанию) */
+.search-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+    display: none; /* Скрыто */
+    align-items: center;
+    padding: 0 15px;
+    z-index: 101;
+}
+
+.search-input {
+    flex-grow: 1;
+    height: 36px;
+    border: 1px solid #ddd;
+    border-radius: 18px;
+    padding: 0 15px;
+    font-size: 16px;
+    outline: none;
+    background: var(--tg-theme-bg-color, #fff);
+    color: var(--tg-theme-text-color, #000);
+    margin-right: 10px;
+}
+
+.search-close {
+    font-size: 14px;
+    color: #000;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Контент */
 .content {
     padding: 15px;
     display: flex;
@@ -55,6 +98,7 @@ h1 {
     gap: 10px;
 }
 
+/* Карточка */
 .card {
     background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
     padding: 15px;
@@ -74,6 +118,7 @@ h1 {
     font-weight: 500;
 }
 
+/* Детальный просмотр */
 .dish-detail {
     background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
     border-radius: 12px;
