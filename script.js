@@ -189,19 +189,11 @@ function renderDishes(category) {
 }
 
 function renderDishDetail(dish, parentCategory) {
-    // Если пришли из поиска, кнопка назад должна вести в категории
+    // Если пришли из поиска, кнопка назад ведет в категории
     if (historyStack.length === 0) {
         historyStack.push(() => renderCategories());
     } else {
-        // Если пришли из категории, то как обычно
-        // Проверяем, не дублируем ли мы возврат к блюдам
-        const last = historyStack[historyStack.length - 1];
-        // Логика упрощена: всегда возвращаем в список блюд, если мы там были
         if (parentCategory) {
-             // Удаляем текущий обработчик возврата если надо, но проще просто запушить
-             // Важный момент: если мы пришли из ПОИСКА, у нас parentCategory есть, но в стеке пусто.
-             // Мы уже обработали это выше (if stack empty)
-             // Если стек не пуст, значит мы шли по пути Главная -> Категория.
              historyStack.push(() => renderDishes(parentCategory));
         }
     }
@@ -212,8 +204,11 @@ function renderDishDetail(dish, parentCategory) {
     
     const imgUrl = dish.image ? (IMAGE_PATH_PREFIX + dish.image) : null;
     const imgHTML = imgUrl ? `<img src="${imgUrl}" class="dish-image" alt="${dish.name}">` : '';
-    const ingredients = dish.ingredients ? dish.ingredients.replace(/\n/g, '<br>') : '';
-    const recipe = dish.recipe ? dish.recipe.replace(/\n/g, '<br>') : '';
+
+    // ИЗМЕНЕНИЕ: Мы больше не делаем .replace(...)
+    // Мы берем текст "как есть", CSS сам разберется с пробелами
+    const ingredients = dish.ingredients || '';
+    const recipe = dish.recipe || '';
 
     const el = document.createElement('div');
     el.className = 'dish-detail';

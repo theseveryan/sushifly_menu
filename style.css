@@ -146,8 +146,11 @@ h1 {
 
 .dish-text {
     font-size: 15px;
-    line-height: 1.5;
-    white-space: pre-wrap;
+    /* Уменьшаем интервал (было 1.5, стало 1.25) */
+    line-height: 1.25; 
+    /* Эта настройка говорит браузеру: "Рисуй текст точно так же, как он написан в Excel" */
+    white-space: pre-wrap; 
+    color: #000;
 }
 
 .arrow {
