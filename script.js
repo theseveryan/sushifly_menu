@@ -7,6 +7,8 @@ const pageTitle = document.getElementById('page-title');
 const backBtn = document.getElementById('back-btn');
 const searchBtn = document.getElementById('search-btn');
 const headerSpacer = document.getElementById('header-spacer');
+// Добавляем элемент логотипа
+const headerLogo = document.getElementById('header-logo');
 
 // Элементы поиска
 const searchContainer = document.getElementById('search-container');
@@ -135,15 +137,26 @@ function performSearch(query) {
 // --- НАВИГАЦИЯ ---
 
 function updateHeaderUI() {
+    // Проверка, есть ли логотип (на случай если HTML еще не обновился)
+    const hasLogo = !!headerLogo;
+
     if (historyStack.length === 0) {
+        // --- ГЛАВНАЯ СТРАНИЦА ---
         backBtn.style.display = 'none';
         tg.BackButton.hide();
         
+        // Показываем логотип
+        if (hasLogo) headerLogo.style.display = 'block';
+
         searchBtn.style.display = 'flex';
         headerSpacer.style.display = 'none';
     } else {
+        // --- ВНУТРЕННИЕ СТРАНИЦЫ ---
         backBtn.style.display = 'flex';
         tg.BackButton.show();
+        
+        // Скрываем логотип
+        if (hasLogo) headerLogo.style.display = 'none';
         
         searchBtn.style.display = 'none'; 
         headerSpacer.style.display = 'flex';

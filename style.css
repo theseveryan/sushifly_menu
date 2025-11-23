@@ -169,3 +169,11 @@ h1 {
     /* Цвет стрелочки - серый hint color */
     color: var(--tg-theme-hint-color, #999);
 }
+
+.header-logo {
+    width: 32px; 
+    height: 32px;
+    object-fit: contain;
+    margin-right: 10px;
+    display: block; 
+}
