@@ -3,161 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Техкарты</title>
+    <title>SushiFly раскладка</title>
+    
+    <!-- Стили -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Библиотека для CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body>
 
     <div id="app">
         <header class="header">
+            <!-- Кнопка назад -->
             <button id="back-btn" class="icon-button" style="display: none;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
+            
+            <!-- Заголовок -->
             <h1 id="page-title">Меню</h1>
+            
+            <!-- Пустой блок для выравнивания -->
             <div class="header-spacer"></div>
         </header>
 
+        <!-- Контент -->
         <div id="content" class="content"></div>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+    <!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ (Порядок важен!) -->
+    <!-- 1. Настройки -->
+    <script src="config.js"></script>
+    <!-- 2. Логика приложения -->
+    <script src="script.js"></script>
 
-        // ВНИМАНИЕ: ВСТАВЬ СЮДА СВОЮ ССЫЛКУ НА GOOGLE CSV МЕЖДУ КАВЫЧЕК НИЖЕ
-        const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?output=csv";
-        
-        // Это папка, где будут лежать картинки на Github
-        const IMAGE_PATH_PREFIX = "img/"; 
-
-        const CATEGORY_NAMES = {
-            'rolls': 'Роллы',
-            'sushi': 'Суши / Гунканы',
-            'wok': 'WOK / Горячее',
-            'soups': 'Супы',
-            'salads': 'Салаты'
-        };
-
-        const contentDiv = document.getElementById('content');
-        const pageTitle = document.getElementById('page-title');
-        const backBtn = document.getElementById('back-btn');
-
-        let menuData = [];
-        let historyStack = [];
-
-        function loadMenu() {
-            contentDiv.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Загрузка меню...</div>';
-            
-            Papa.parse(GOOGLE_SHEET_URL, {
-                download: true,
-                header: true, 
-                complete: function(results) {
-                    processData(results.data);
-                },
-                error: function(err) {
-                    contentDiv.innerHTML = '<div style="color:red; text-align:center;">Ошибка доступа к таблице.</div>';
-                }
-            });
-        }
-
-        function processData(items) {
-            const uniqueCategories = [...new Set(items.map(item => item.category).filter(c => c))];
-            
-            menuData = uniqueCategories.map(catId => {
-                return {
-                    id: catId,
-                    title: CATEGORY_NAMES[catId] || catId,
-                    items: items.filter(item => item.category === catId)
-                };
-            });
-            renderCategories();
-        }
-
-        function updateBackButton() {
-            if (historyStack.length > 0) {
-                backBtn.style.display = 'flex';
-                tg.BackButton.show();
-            } else {
-                backBtn.style.display = 'none';
-                tg.BackButton.hide();
-            }
-        }
-
-        function renderCategories() {
-            historyStack = [];
-            updateBackButton();
-            contentDiv.innerHTML = '';
-            pageTitle.innerText = 'Меню';
-
-            if (menuData.length === 0) {
-                contentDiv.innerHTML = '<div style="text-align:center;">Таблица пуста</div>';
-                return;
-            }
-
-            menuData.forEach(cat => {
-                const el = document.createElement('div');
-                el.className = 'card';
-                el.innerHTML = `<span class="card-title">${cat.title}</span><span class="arrow">›</span>`;
-                el.onclick = () => renderDishes(cat);
-                contentDiv.appendChild(el);
-            });
-        }
-
-        function renderDishes(category) {
-            historyStack.push(() => renderCategories());
-            updateBackButton();
-            contentDiv.innerHTML = '';
-            pageTitle.innerText = category.title;
-
-            category.items.forEach(dish => {
-                const el = document.createElement('div');
-                el.className = 'card';
-                el.innerHTML = `<span class="card-title">${dish.name}</span><span class="arrow">›</span>`;
-                el.onclick = () => renderDishDetail(dish, category);
-                contentDiv.appendChild(el);
-            });
-        }
-
-        function renderDishDetail(dish, parentCategory) {
-            historyStack.push(() => renderDishes(parentCategory));
-            updateBackButton();
-            contentDiv.innerHTML = '';
-            pageTitle.innerText = dish.name;
-            
-            const imgUrl = dish.image ? (IMAGE_PATH_PREFIX + dish.image) : null;
-            const imgHTML = imgUrl ? `<img src="${imgUrl}" class="dish-image" alt="${dish.name}">` : '';
-
-            const ingredients = dish.ingredients ? dish.ingredients.replace(/\n/g, '<br>') : '';
-            const recipe = dish.recipe ? dish.recipe.replace(/\n/g, '<br>') : '';
-
-            const el = document.createElement('div');
-            el.className = 'dish-detail';
-            el.innerHTML = `
-                ${imgHTML}
-                <div class="dish-info">
-                    <div class="section-title">Граммовки / Состав</div>
-                    <div class="dish-text">${ingredients}</div>
-                    <div class="section-title">Технология</div>
-                    <div class="dish-text">${recipe}</div>
-                </div>
-            `;
-            contentDiv.appendChild(el);
-        }
-
-        function goBack() {
-            if (historyStack.length > 0) historyStack.pop()();
-            else renderCategories();
-            updateBackButton();
-        }
-
-        backBtn.addEventListener('click', goBack);
-        tg.BackButton.onClick(goBack);
-
-        loadMenu();
-    </script>
 </body>
 </html>
