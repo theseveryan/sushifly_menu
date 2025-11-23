@@ -1,0 +1,110 @@
+/* Сброс стилей */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--tg-theme-bg-color, #fff);
+    color: var(--tg-theme-text-color, #000);
+    padding-bottom: 20px;
+}
+
+.header {
+    padding: 10px 15px;
+    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+}
+
+h1 {
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    flex-grow: 1; 
+}
+
+.icon-button, .header-spacer {
+    width: 32px; 
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--tg-theme-button-color, #2481cc);
+    padding: 0;
+}
+
+.content {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card {
+    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+    padding: 15px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card:active {
+    opacity: 0.7;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.dish-detail {
+    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.dish-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    display: block;
+}
+
+.dish-info {
+    padding: 20px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    margin-top: 20px;
+    color: var(--tg-theme-button-color, #2481cc);
+}
+
+.dish-text {
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.arrow {
+    color: var(--tg-theme-hint-color, #999);
+}
