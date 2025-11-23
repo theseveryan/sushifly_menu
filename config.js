@@ -5,7 +5,22 @@ const IMAGE_PATH_PREFIX = "img/";
 
 // ВНИМАНИЕ: Вставьте ваши ссылки внутри кавычек url: "..."
 const CATEGORIES_CONFIG = [
-    { 
+	{ 
+        id: 'wok', 
+        title: 'WOK', 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=886705133&single=true&output=csv" 
+    },
+	{ 
+        id: 'combo', 
+        title: 'Комбо', 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=391305321&single=true&output=csv" 
+    },
+	{ 
+        id: 'sets', 
+        title: 'Сеты', 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=1120750076&single=true&output=csv" 
+    },
+	{ 
         id: 'cold_rolls', 
         title: 'Холодные роллы', 
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=0&single=true&output=csv" 
@@ -13,57 +28,41 @@ const CATEGORIES_CONFIG = [
     { 
         id: 'hot_rolls', 
         title: 'Горячие роллы', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=1136918048&single=true&output=csv" 
     },
-    { 
-        id: 'sets', 
-        title: 'Сеты', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
-    },
-    { 
-        id: 'yakitori', 
-        title: 'Якитори', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
-    },
-    { 
-        id: 'soup', 
-        title: 'Супы', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
-    },
-    { 
-        id: 'salad', 
-        title: 'Салаты', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
-    },
-    { 
-        id: 'onigiri', 
-        title: 'Онигири', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
-    },
-    { 
+	{ 
         id: 'sushi-gunkan', 
         title: 'Суши и Гунканы', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=1274693568&single=true&output=csv" 
     },
     { 
         id: 'maki', 
         title: 'Маки', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=1722220340&single=true&output=csv" 
+    },
+	{ 
+        id: 'onigiri', 
+        title: 'Онигири', 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=1819106683&single=true&output=csv" 
+    },
+	{ 
+        id: 'soup', 
+        title: 'Супы', 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=2129850367&single=true&output=csv" 
+    },
+	{ 
+        id: 'soup', 
+        title: 'Супы', 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=2129850367&single=true&output=csv" 
     },
     { 
-        id: 'wok', 
-        title: 'WOK', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
+        id: 'salad', 
+        title: 'Салаты и Поке', 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=1774700423&single=true&output=csv" 
     },
-    { 
+	{ 
         id: 'desserts', 
         title: 'Десерты', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
-    },
-    { 
-        id: 'combo', 
-        title: 'Комбо', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=1290067053&single=true&output=csv" 
     }
-
 ];
