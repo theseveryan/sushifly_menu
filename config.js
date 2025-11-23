@@ -8,7 +8,7 @@ const CATEGORIES_CONFIG = [
     { 
         id: 'cold_rolls', 
         title: 'Холодные роллы', 
-        url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=0&single=true&output=csv" 
     },
     { 
         id: 'hot_rolls', 
@@ -65,4 +65,5 @@ const CATEGORIES_CONFIG = [
         title: 'Комбо', 
         url: "ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_ЗДЕСЬ" 
     }
+
 ];
