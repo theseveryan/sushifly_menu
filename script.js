@@ -17,6 +17,18 @@ let menuData = [];
 let historyStack = [];
 let isSearchActive = false; // Флаг, активен ли поиск
 
+// --- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ЖИРНОГО ТЕКСТА ---
+function formatText(text) {
+    if (!text) return '';
+    // 1. Меняем переносы строк из Excel/GoogleSheets на HTML переносы <br>
+    let formatted = text.replace(/\n/g, '<br>');
+    
+    // 2. Меняем текст внутри звездочек *текст* на жирный <b>текст</b>
+    formatted = formatted.replace(/\*(.*?)\*/g, '<b>$1</b>');
+    
+    return formatted;
+}
+
 // --- ЗАГРУЗКА ---
 function loadMenu() {
     if (typeof CATEGORIES_CONFIG === 'undefined') {
@@ -72,17 +84,9 @@ function closeSearch() {
     searchContainer.style.display = 'none';
     searchInput.value = '';
     isSearchActive = false;
-    // Если мы были на главной, обновляем главную. Если внутри блюда - остаемся.
-    // Для простоты возвращаемся на экран, который был
     if (historyStack.length === 0) renderCategories();
     else {
-        // Повторно вызываем последнюю функцию отрисовки, чтобы убрать результаты поиска
-        const lastAction = historyStack[historyStack.length - 1];
-        // Но это сложно, проще просто вернуться назад к категориям, если поиск закрыли
-        // Или просто перерисовать текущий вид?
-        // Сделаем так: при закрытии поиска, если мы ничего не выбирали, просто рендерим то что было.
-        // Но логичнее при поиске просто показывать список.
-        renderCategories();
+        renderCategories(); // Возвращаемся в категории при закрытии
     }
 }
 
@@ -106,7 +110,6 @@ function performSearch(query) {
                 foundSomething = true;
                 const el = document.createElement('div');
                 el.className = 'card';
-                // Добавляем название категории серым цветом
                 el.innerHTML = `
                     <div style="display:flex; flex-direction:column;">
                         <span class="card-title">${dish.name}</span>
@@ -114,11 +117,8 @@ function performSearch(query) {
                     </div>
                     <span class="arrow">›</span>
                 `;
-                // При клике из поиска открываем блюдо.
-                // Важно: кнопка назад должна вести обратно в поиск или на главную?
-                // Сделаем, чтобы вела на главную для простоты.
                 el.onclick = () => {
-                    searchContainer.style.display = 'none'; // Скрываем строку поиска
+                    searchContainer.style.display = 'none';
                     isSearchActive = false;
                     renderDishDetail(dish, cat);
                 };
@@ -135,19 +135,18 @@ function performSearch(query) {
 // --- НАВИГАЦИЯ ---
 
 function updateHeaderUI() {
-    // Если мы на главной (стек пуст)
     if (historyStack.length === 0) {
         backBtn.style.display = 'none';
         tg.BackButton.hide();
         
-        searchBtn.style.display = 'flex'; // Показываем лупу
+        searchBtn.style.display = 'flex';
         headerSpacer.style.display = 'none';
     } else {
         backBtn.style.display = 'flex';
         tg.BackButton.show();
         
-        searchBtn.style.display = 'none'; // Скрываем лупу внутри категорий/блюд
-        headerSpacer.style.display = 'flex'; // Чтобы заголовок не прыгал
+        searchBtn.style.display = 'none'; 
+        headerSpacer.style.display = 'flex';
     }
 }
 
@@ -189,7 +188,7 @@ function renderDishes(category) {
 }
 
 function renderDishDetail(dish, parentCategory) {
-    // Если пришли из поиска, кнопка назад ведет в категории
+    // Навигация
     if (historyStack.length === 0) {
         historyStack.push(() => renderCategories());
     } else {
@@ -205,10 +204,9 @@ function renderDishDetail(dish, parentCategory) {
     const imgUrl = dish.image ? (IMAGE_PATH_PREFIX + dish.image) : null;
     const imgHTML = imgUrl ? `<img src="${imgUrl}" class="dish-image" alt="${dish.name}">` : '';
 
-    // ИЗМЕНЕНИЕ: Мы больше не делаем .replace(...)
-    // Мы берем текст "как есть", CSS сам разберется с пробелами
-    const ingredients = dish.ingredients || '';
-    const recipe = dish.recipe || '';
+    // Применяем форматирование текста (превращаем *текст* в жирный)
+    const ingredients = formatText(dish.ingredients);
+    const recipe = formatText(dish.recipe);
 
     const el = document.createElement('div');
     el.className = 'dish-detail';
