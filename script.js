@@ -7,7 +7,6 @@ const pageTitle = document.getElementById('page-title');
 const backBtn = document.getElementById('back-btn');
 const searchBtn = document.getElementById('search-btn');
 const headerSpacer = document.getElementById('header-spacer');
-// Элемент логотипа
 const headerLogo = document.getElementById('header-logo');
 
 // Элементы поиска
@@ -15,19 +14,45 @@ const searchContainer = document.getElementById('search-container');
 const searchInput = document.getElementById('search-input');
 const searchClose = document.getElementById('search-close');
 
+// Элементы модального окна (фото)
+const imageModal = document.getElementById('image-modal');
+const modalImg = document.getElementById('modal-img');
+const modalCloseBtn = document.getElementById('modal-close');
+
 let menuData = [];
 let historyStack = [];
-let isSearchActive = false; // Флаг, активен ли поиск
+let isSearchActive = false; 
+let isModalOpen = false; // Флаг: открыто ли фото
 
 // --- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ЖИРНОГО ТЕКСТА ---
 function formatText(text) {
     if (!text) return '';
-    // 1. Меняем переносы строк на <br>
     let formatted = text.replace(/\n/g, '<br>');
-    // 2. Меняем *текст* на жирный <b>текст</b>
     formatted = formatted.replace(/\*(.*?)\*/g, '<b>$1</b>');
     return formatted;
 }
+
+// --- ЛОГИКА МОДАЛЬНОГО ОКНА (ЗУМ) ---
+function openModal(src) {
+    modalImg.src = src;
+    imageModal.style.display = 'flex';
+    isModalOpen = true;
+    tg.BackButton.show(); // Убеждаемся, что кнопка назад видна
+}
+
+function closeModal() {
+    imageModal.style.display = 'none';
+    modalImg.src = '';
+    isModalOpen = false;
+    // Если мы были на главной и открыли фото (редкий кейс, но все же), проверяем UI
+    updateHeaderUI();
+}
+
+// Закрытие по клику на крестик или фон
+modalCloseBtn.onclick = closeModal;
+imageModal.onclick = (e) => {
+    if (e.target === imageModal) closeModal();
+};
 
 // --- ЗАГРУЗКА ---
 function loadMenu() {
@@ -36,53 +61,39 @@ function loadMenu() {
         return;
     }
 
-    // 1. Рисуем начальное состояние загрузки
     contentDiv.innerHTML = '<div id="loading-text" style="text-align:center; padding:20px; color:#999; font-weight:500; font-size:16px;">Загрузка меню 0%</div>';
     
     const loadingText = document.getElementById('loading-text');
     let loadedCount = 0;
     const totalCount = CATEGORIES_CONFIG.length;
 
-    // Функция, которая обновляет проценты на экране
     const updateProgress = () => {
         loadedCount++;
-        // Считаем процент (округляем до целого)
         let percent = Math.floor((loadedCount / totalCount) * 100);
-        // На всякий случай ограничиваем 100%, чтобы не было 101%
         if (percent > 100) percent = 100;
-        
-        if (loadingText) {
-            loadingText.innerText = `Загрузка меню ${percent}%`;
-        }
+        if (loadingText) loadingText.innerText = `Загрузка меню ${percent}%`;
     };
     
     const promises = CATEGORIES_CONFIG.map(cat => {
         return new Promise((resolve) => {
-            // Если URL пустой или заглушка
             if (!cat.url || cat.url.includes("ВСТАВЬТЕ")) {
-                // Все равно считаем прогресс, хоть файл и пустой
                 updateProgress();
                 resolve({ ...cat, items: [] }); 
                 return;
             }
-
             Papa.parse(cat.url, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
-                    // Парсинг успешен
                     const validItems = results.data.filter(item => item.name && item.name.trim() !== '').map(item => ({
                         ...item,
                         searchName: item.name.toLowerCase() 
                     }));
-                    
-                    // ОБНОВЛЯЕМ ПРОЦЕНТЫ
                     updateProgress();
                     resolve({ id: cat.id, title: cat.title, items: validItems });
                 },
                 error: function() {
-                    // Если ошибка загрузки — тоже обновляем прогресс (чтобы не зависло)
                     updateProgress();
                     resolve({ ...cat, items: [] });
                 }
@@ -92,8 +103,6 @@ function loadMenu() {
 
     Promise.all(promises).then(loadedCategories => {
         menuData = loadedCategories;
-        
-        // Делаем маленькую паузу (200мс), чтобы пользователь успел увидеть "100%"
         setTimeout(() => {
             renderCategories();
         }, 200);
@@ -102,14 +111,12 @@ function loadMenu() {
 
 // --- ПОИСК ---
 
-// Открыть поиск
 searchBtn.addEventListener('click', () => {
     searchContainer.style.display = 'flex';
     searchInput.focus();
     isSearchActive = true;
 });
 
-// Закрыть поиск
 searchClose.addEventListener('click', closeSearch);
 
 function closeSearch() {
@@ -117,12 +124,9 @@ function closeSearch() {
     searchInput.value = '';
     isSearchActive = false;
     if (historyStack.length === 0) renderCategories();
-    else {
-        renderCategories(); 
-    }
+    else renderCategories(); 
 }
 
-// Ввод текста
 searchInput.addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase().trim();
     if (query.length === 0) {
@@ -169,22 +173,25 @@ function performSearch(query) {
 function updateHeaderUI() {
     const hasLogo = !!headerLogo;
 
+    // Если открыто модальное окно, всегда показываем кнопку назад
+    if (isModalOpen) {
+        backBtn.style.display = 'flex';
+        tg.BackButton.show();
+        return; 
+    }
+
     if (historyStack.length === 0) {
         // Главная
         backBtn.style.display = 'none';
         tg.BackButton.hide();
-        
         if (hasLogo) headerLogo.style.display = 'block';
-
         searchBtn.style.display = 'flex';
         headerSpacer.style.display = 'none';
     } else {
         // Внутренняя
         backBtn.style.display = 'flex';
         tg.BackButton.show();
-        
         if (hasLogo) headerLogo.style.display = 'none';
-        
         searchBtn.style.display = 'none'; 
         headerSpacer.style.display = 'flex';
     }
@@ -192,6 +199,7 @@ function updateHeaderUI() {
 
 function renderCategories() {
     historyStack = [];
+    isModalOpen = false;
     updateHeaderUI();
     contentDiv.innerHTML = '';
     pageTitle.innerText = 'Меню';
@@ -249,7 +257,7 @@ function renderDishDetail(dish, parentCategory) {
     const el = document.createElement('div');
     el.className = 'dish-detail';
     el.innerHTML = `
-        ${imgHTML}
+        <div class="image-container">${imgHTML}</div>
         <div class="dish-info">
             <div class="section-title">Граммовки / Состав</div>
             <div class="dish-text">${ingredients}</div>
@@ -257,14 +265,28 @@ function renderDishDetail(dish, parentCategory) {
             <div class="dish-text">${recipe}</div>
         </div>
     `;
+    
+    // Добавляем обработчик клика на картинку (если она есть)
+    const imgElement = el.querySelector('.dish-image');
+    if (imgElement && imgUrl) {
+        imgElement.onclick = () => openModal(imgUrl);
+    }
+
     contentDiv.appendChild(el);
 }
 
 function goBack() {
+    // 1. Если открыто модальное окно — закрываем его
+    if (isModalOpen) {
+        closeModal();
+        return;
+    }
+    // 2. Если открыт поиск — закрываем поиск
     if (isSearchActive) {
         closeSearch();
         return;
     }
+    // 3. Иначе идем назад по истории
     if (historyStack.length > 0) {
         const previousAction = historyStack.pop();
         previousAction();
