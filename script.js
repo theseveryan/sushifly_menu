@@ -7,6 +7,7 @@ const pageTitle = document.getElementById('page-title');
 const backBtn = document.getElementById('back-btn');
 const searchBtn = document.getElementById('search-btn');
 const headerSpacer = document.getElementById('header-spacer');
+// ВАЖНО: Убедись, что ID совпадает с HTML (если переименовал файл - тут менять не надо, тут ищется ID тега)
 const headerLogo = document.getElementById('header-logo');
 
 // Элементы поиска
@@ -29,10 +30,10 @@ let currentScale = 1;
 let currentX = 0;
 let currentY = 0;
 let startDist = 0;
-let startX = 0;
-let startY = 0;
-let lastX = 0;
-let lastY = 0;
+let startX = 0; // Точка нажатия пальцем (X)
+let startY = 0; // Точка нажатия пальцем (Y)
+let initialX = 0; // Позиция картинки в момент начала жеста
+let initialY = 0; // Позиция картинки в момент начала жеста
 
 // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 function formatText(text) {
@@ -42,14 +43,14 @@ function formatText(text) {
     return formatted;
 }
 
-// --- ЛОГИКА МОДАЛЬНОГО ОКНА И ЗУМА ---
+// --- ЛОГИКА ЗУМА И ГРАНИЦ ---
 
 function resetZoom() {
     currentScale = 1;
     currentX = 0;
     currentY = 0;
-    lastX = 0;
-    lastY = 0;
+    initialX = 0;
+    initialY = 0;
     updateTransform();
 }
 
@@ -61,7 +62,7 @@ function openModal(src) {
     modalImg.src = src;
     imageModal.style.display = 'flex';
     isModalOpen = true;
-    document.body.classList.add('no-scroll'); // Блокируем скролл фона
+    document.body.classList.add('no-scroll');
     resetZoom();
     tg.BackButton.show();
 }
@@ -70,53 +71,93 @@ function closeModal() {
     imageModal.style.display = 'none';
     modalImg.src = '';
     isModalOpen = false;
-    document.body.classList.remove('no-scroll'); // Разблокируем скролл
+    document.body.classList.remove('no-scroll');
     updateHeaderUI();
 }
 
-// Обработка жестов (Touch Events)
+// Обработка жестов
 imageModal.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
-        // Начало щипка (Pinch)
+        // Начало зума (два пальца)
         startDist = getDistance(e.touches);
     } else if (e.touches.length === 1) {
-        // Начало перетаскивания (Pan)
-        startX = e.touches[0].clientX - currentX;
-        startY = e.touches[0].clientY - currentY;
+        // Начало движения (один палец)
+        // Запоминаем, где стояла картинка (initial) и где нажали (start)
+        initialX = currentX;
+        initialY = currentY;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
     }
 });
 
 imageModal.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // Запрещаем браузеру скроллить
+    e.preventDefault(); // Блокируем скролл браузера
     
     if (e.touches.length === 2) {
-        // Логика зума
+        // --- ЗУМ (2 пальца) ---
         const newDist = getDistance(e.touches);
         const scaleChange = newDist / startDist;
         
-        // Ограничиваем зум (от 1x до 4x)
         let newScale = currentScale * scaleChange;
+        
+        // Ограничения зума: минимум 1x, максимум 4x
         if (newScale < 1) newScale = 1;
         if (newScale > 4) newScale = 4;
 
         currentScale = newScale;
         startDist = newDist; // Обновляем дистанцию для плавности
+        
+        // Если мы уменьшили до 1x, сбрасываем позицию в центр
+        if (currentScale === 1) {
+            currentX = 0;
+            currentY = 0;
+        }
+        
         updateTransform();
         
     } else if (e.touches.length === 1 && currentScale > 1) {
-        // Логика перетаскивания (только если есть зум)
-        currentX = e.touches[0].clientX - startX;
-        currentY = e.touches[0].clientY - startY;
+        // --- ПЕРЕМЕЩЕНИЕ (1 палец) - Только если есть зум! ---
+        
+        // Насколько сдвинулся палец
+        const deltaX = e.touches[0].clientX - startX;
+        const deltaY = e.touches[0].clientY - startY;
+
+        // Новая потенциальная позиция
+        let nextX = initialX + deltaX;
+        let nextY = initialY + deltaY;
+
+        // --- МАТЕМАТИКА ГРАНИЦ ---
+        // Картинка растет от центра. Значит, слева и справа появляется "лишнее" место.
+        // Размер "лишнего" места с одной стороны = (ШиринаЭкрана * Масштаб - ШиринаЭкрана) / 2
+        
+        const boundsX = (window.innerWidth * currentScale - window.innerWidth) / 2;
+        const boundsY = (window.innerHeight * currentScale - window.innerHeight) / 2;
+
+        // Запрещаем выходить за эти границы (функция clamp)
+        // Math.max(-bounds, ...) не дает уйти слишком влево
+        // Math.min(bounds, ...) не дает уйти слишком вправо
+        
+        currentX = Math.min(boundsX, Math.max(-boundsX, nextX));
+        currentY = Math.min(boundsY, Math.max(-boundsY, nextY));
+
         updateTransform();
     }
 });
 
-// Дополнительно: Двойной клик для быстрого зума
+// Если палец отпустили, и масштаб стал меньше 1 (из-за инерции), возвращаем 1
+imageModal.addEventListener('touchend', (e) => {
+    if (currentScale < 1.1) {
+        // Если масштаб почти 1, принудительно центрируем
+        resetZoom();
+    }
+});
+
+// Двойной клик
 imageModal.addEventListener('dblclick', () => {
     if (currentScale === 1) {
-        currentScale = 2;
+        currentScale = 2; // Увеличиваем в 2 раза
     } else {
-        resetZoom();
+        resetZoom(); // Возвращаем назад
     }
     updateTransform();
 });
@@ -127,10 +168,9 @@ function getDistance(touches) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-// Закрытие
 modalCloseBtn.onclick = closeModal;
 
-// --- ЗАГРУЗКА ---
+// --- ЗАГРУЗКА И ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ---
 function loadMenu() {
     if (typeof CATEGORIES_CONFIG === 'undefined') {
         contentDiv.innerHTML = '<div style="color:red; text-align:center;">Ошибка: config.js не найден.</div>';
@@ -244,14 +284,12 @@ function performSearch(query) {
 }
 
 // --- НАВИГАЦИЯ ---
-
 function updateHeaderUI() {
     const hasLogo = !!headerLogo;
 
     if (isModalOpen) {
         backBtn.style.display = 'flex';
         tg.BackButton.show();
-        // В режиме фото скрываем поиск и логотип
         searchBtn.style.display = 'none';
         if (hasLogo) headerLogo.style.display = 'none';
         return; 
