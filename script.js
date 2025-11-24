@@ -7,7 +7,6 @@ const pageTitle = document.getElementById('page-title');
 const backBtn = document.getElementById('back-btn');
 const searchBtn = document.getElementById('search-btn');
 const headerSpacer = document.getElementById('header-spacer');
-// ВАЖНО: Убедись, что ID совпадает с HTML (если переименовал файл - тут менять не надо, тут ищется ID тега)
 const headerLogo = document.getElementById('header-logo');
 
 // Элементы поиска
@@ -25,15 +24,17 @@ let historyStack = [];
 let isSearchActive = false; 
 let isModalOpen = false;
 
-// ПЕРЕМЕННЫЕ ДЛЯ ЗУМА
+// ПЕРЕМЕННЫЕ ДЛЯ ЗУМА (ГЛОБАЛЬНЫЕ)
 let currentScale = 1;
 let currentX = 0;
 let currentY = 0;
+
+// Переменные для отслеживания жестов
 let startDist = 0;
-let startX = 0; // Точка нажатия пальцем (X)
-let startY = 0; // Точка нажатия пальцем (Y)
-let initialX = 0; // Позиция картинки в момент начала жеста
-let initialY = 0; // Позиция картинки в момент начала жеста
+let startX = 0;
+let startY = 0;
+let lastX = 0; // Сохраняем позицию, где остановились в прошлый раз
+let lastY = 0;
 
 // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 function formatText(text) {
@@ -49,8 +50,8 @@ function resetZoom() {
     currentScale = 1;
     currentX = 0;
     currentY = 0;
-    initialX = 0;
-    initialY = 0;
+    lastX = 0;
+    lastY = 0;
     updateTransform();
 }
 
@@ -75,89 +76,103 @@ function closeModal() {
     updateHeaderUI();
 }
 
-// Обработка жестов
+// 1. НАЧАЛО ЖЕСТА
 imageModal.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
-        // Начало зума (два пальца)
+        // Два пальца - готовимся к зуму
         startDist = getDistance(e.touches);
     } else if (e.touches.length === 1) {
-        // Начало движения (один палец)
-        // Запоминаем, где стояла картинка (initial) и где нажали (start)
-        initialX = currentX;
-        initialY = currentY;
+        // Один палец - готовимся к перетаскиванию
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
+        // Важно: мы НЕ сбрасываем lastX/lastY, мы продолжаем с них
     }
 });
 
+// 2. ДВИЖЕНИЕ
 imageModal.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // Блокируем скролл браузера
+    e.preventDefault(); // Блокируем скролл страницы
     
     if (e.touches.length === 2) {
-        // --- ЗУМ (2 пальца) ---
+        // --- ЛОГИКА МАСШТАБИРОВАНИЯ (PINCH) ---
         const newDist = getDistance(e.touches);
         const scaleChange = newDist / startDist;
         
         let newScale = currentScale * scaleChange;
         
-        // Ограничения зума: минимум 1x, максимум 4x
+        // Ограничиваем зум
         if (newScale < 1) newScale = 1;
         if (newScale > 4) newScale = 4;
 
         currentScale = newScale;
-        startDist = newDist; // Обновляем дистанцию для плавности
+        startDist = newDist; // Обновляем, чтобы зум был плавным, а не дерганым
         
-        // Если мы уменьшили до 1x, сбрасываем позицию в центр
+        // Если вернулись к 1x, сбрасываем позицию в центр
         if (currentScale === 1) {
             currentX = 0;
             currentY = 0;
+            lastX = 0;
+            lastY = 0;
         }
         
         updateTransform();
         
     } else if (e.touches.length === 1 && currentScale > 1) {
-        // --- ПЕРЕМЕЩЕНИЕ (1 палец) - Только если есть зум! ---
-        
-        // Насколько сдвинулся палец
+        // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ (PAN) ---
+        // Работает только если есть зум (>1)
+
         const deltaX = e.touches[0].clientX - startX;
         const deltaY = e.touches[0].clientY - startY;
 
-        // Новая потенциальная позиция
-        let nextX = initialX + deltaX;
-        let nextY = initialY + deltaY;
+        // Предварительная новая позиция (относительно последнего места)
+        let nextX = lastX + deltaX;
+        let nextY = lastY + deltaY;
 
-        // --- МАТЕМАТИКА ГРАНИЦ ---
-        // Картинка растет от центра. Значит, слева и справа появляется "лишнее" место.
-        // Размер "лишнего" места с одной стороны = (ШиринаЭкрана * Масштаб - ШиринаЭкрана) / 2
+        // --- МАТЕМАТИКА ПРИЛИПАНИЯ К КРАЯМ (CLAMPING) ---
         
-        const boundsX = (window.innerWidth * currentScale - window.innerWidth) / 2;
-        const boundsY = (window.innerHeight * currentScale - window.innerHeight) / 2;
+        // 1. Узнаем реальный размер картинки при текущем зуме
+        // Используем offsetWidth, так как он берет текущий отрисованный размер блока
+        const scaledWidth = modalImg.offsetWidth * currentScale;
+        const scaledHeight = modalImg.offsetHeight * currentScale;
 
-        // Запрещаем выходить за эти границы (функция clamp)
-        // Math.max(-bounds, ...) не дает уйти слишком влево
-        // Math.min(bounds, ...) не дает уйти слишком вправо
-        
-        currentX = Math.min(boundsX, Math.max(-boundsX, nextX));
-        currentY = Math.min(boundsY, Math.max(-boundsY, nextY));
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
+
+        // 2. Считаем, насколько картинка вылезает за экран (по одной стороне)
+        // Если картинка меньше экрана, maxOffset будет < 0 (или 0)
+        const maxOffsetX = Math.max(0, (scaledWidth - viewportW) / 2);
+        const maxOffsetY = Math.max(0, (scaledHeight - viewportH) / 2);
+
+        // 3. Запрещаем выходить за эти пределы
+        // Math.min(max, val) -> не дает уйти вправо больше чем надо
+        // Math.max(-max, val) -> не дает уйти влево больше чем надо
+        currentX = Math.min(maxOffsetX, Math.max(-maxOffsetX, nextX));
+        currentY = Math.min(maxOffsetY, Math.max(-maxOffsetY, nextY));
 
         updateTransform();
     }
 });
 
-// Если палец отпустили, и масштаб стал меньше 1 (из-за инерции), возвращаем 1
+// 3. КОНЕЦ ЖЕСТА
 imageModal.addEventListener('touchend', (e) => {
-    if (currentScale < 1.1) {
-        // Если масштаб почти 1, принудительно центрируем
-        resetZoom();
+    // Сохраняем позицию, где палец оторвали, чтобы следующий свайп продолжил отсюда
+    if (e.touches.length === 0) {
+        lastX = currentX;
+        lastY = currentY;
+
+        // Если из-за инерции зум стал чуть меньше 1, возвращаем
+        if (currentScale < 1.05) {
+            resetZoom();
+        }
     }
 });
 
-// Двойной клик
+// Двойной тап
 imageModal.addEventListener('dblclick', () => {
     if (currentScale === 1) {
-        currentScale = 2; // Увеличиваем в 2 раза
+        currentScale = 2.5; // Сразу комфортный зум
     } else {
-        resetZoom(); // Возвращаем назад
+        resetZoom();
     }
     updateTransform();
 });
@@ -170,7 +185,7 @@ function getDistance(touches) {
 
 modalCloseBtn.onclick = closeModal;
 
-// --- ЗАГРУЗКА И ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ---
+// --- ЗАГРУЗКА И ОСТАЛЬНОЙ КОД ---
 function loadMenu() {
     if (typeof CATEGORIES_CONFIG === 'undefined') {
         contentDiv.innerHTML = '<div style="color:red; text-align:center;">Ошибка: config.js не найден.</div>';
