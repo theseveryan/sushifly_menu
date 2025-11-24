@@ -14,7 +14,7 @@ const searchContainer = document.getElementById('search-container');
 const searchInput = document.getElementById('search-input');
 const searchClose = document.getElementById('search-close');
 
-// Элементы модального окна (фото)
+// Элементы модального окна
 const imageModal = document.getElementById('image-modal');
 const modalImg = document.getElementById('modal-img');
 const modalCloseBtn = document.getElementById('modal-close');
@@ -22,9 +22,19 @@ const modalCloseBtn = document.getElementById('modal-close');
 let menuData = [];
 let historyStack = [];
 let isSearchActive = false; 
-let isModalOpen = false; // Флаг: открыто ли фото
+let isModalOpen = false;
 
-// --- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ЖИРНОГО ТЕКСТА ---
+// ПЕРЕМЕННЫЕ ДЛЯ ЗУМА
+let currentScale = 1;
+let currentX = 0;
+let currentY = 0;
+let startDist = 0;
+let startX = 0;
+let startY = 0;
+let lastX = 0;
+let lastY = 0;
+
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 function formatText(text) {
     if (!text) return '';
     let formatted = text.replace(/\n/g, '<br>');
@@ -32,27 +42,93 @@ function formatText(text) {
     return formatted;
 }
 
-// --- ЛОГИКА МОДАЛЬНОГО ОКНА (ЗУМ) ---
+// --- ЛОГИКА МОДАЛЬНОГО ОКНА И ЗУМА ---
+
+function resetZoom() {
+    currentScale = 1;
+    currentX = 0;
+    currentY = 0;
+    lastX = 0;
+    lastY = 0;
+    updateTransform();
+}
+
+function updateTransform() {
+    modalImg.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+}
+
 function openModal(src) {
     modalImg.src = src;
     imageModal.style.display = 'flex';
     isModalOpen = true;
-    tg.BackButton.show(); // Убеждаемся, что кнопка назад видна
+    document.body.classList.add('no-scroll'); // Блокируем скролл фона
+    resetZoom();
+    tg.BackButton.show();
 }
 
 function closeModal() {
     imageModal.style.display = 'none';
     modalImg.src = '';
     isModalOpen = false;
-    // Если мы были на главной и открыли фото (редкий кейс, но все же), проверяем UI
+    document.body.classList.remove('no-scroll'); // Разблокируем скролл
     updateHeaderUI();
 }
 
-// Закрытие по клику на крестик или фон
+// Обработка жестов (Touch Events)
+imageModal.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+        // Начало щипка (Pinch)
+        startDist = getDistance(e.touches);
+    } else if (e.touches.length === 1) {
+        // Начало перетаскивания (Pan)
+        startX = e.touches[0].clientX - currentX;
+        startY = e.touches[0].clientY - currentY;
+    }
+});
+
+imageModal.addEventListener('touchmove', (e) => {
+    e.preventDefault(); // Запрещаем браузеру скроллить
+    
+    if (e.touches.length === 2) {
+        // Логика зума
+        const newDist = getDistance(e.touches);
+        const scaleChange = newDist / startDist;
+        
+        // Ограничиваем зум (от 1x до 4x)
+        let newScale = currentScale * scaleChange;
+        if (newScale < 1) newScale = 1;
+        if (newScale > 4) newScale = 4;
+
+        currentScale = newScale;
+        startDist = newDist; // Обновляем дистанцию для плавности
+        updateTransform();
+        
+    } else if (e.touches.length === 1 && currentScale > 1) {
+        // Логика перетаскивания (только если есть зум)
+        currentX = e.touches[0].clientX - startX;
+        currentY = e.touches[0].clientY - startY;
+        updateTransform();
+    }
+});
+
+// Дополнительно: Двойной клик для быстрого зума
+imageModal.addEventListener('dblclick', () => {
+    if (currentScale === 1) {
+        currentScale = 2;
+    } else {
+        resetZoom();
+    }
+    updateTransform();
+});
+
+function getDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Закрытие
 modalCloseBtn.onclick = closeModal;
-imageModal.onclick = (e) => {
-    if (e.target === imageModal) closeModal();
-};
 
 // --- ЗАГРУЗКА ---
 function loadMenu() {
@@ -110,7 +186,6 @@ function loadMenu() {
 }
 
 // --- ПОИСК ---
-
 searchBtn.addEventListener('click', () => {
     searchContainer.style.display = 'flex';
     searchInput.focus();
@@ -173,22 +248,22 @@ function performSearch(query) {
 function updateHeaderUI() {
     const hasLogo = !!headerLogo;
 
-    // Если открыто модальное окно, всегда показываем кнопку назад
     if (isModalOpen) {
         backBtn.style.display = 'flex';
         tg.BackButton.show();
+        // В режиме фото скрываем поиск и логотип
+        searchBtn.style.display = 'none';
+        if (hasLogo) headerLogo.style.display = 'none';
         return; 
     }
 
     if (historyStack.length === 0) {
-        // Главная
         backBtn.style.display = 'none';
         tg.BackButton.hide();
         if (hasLogo) headerLogo.style.display = 'block';
         searchBtn.style.display = 'flex';
         headerSpacer.style.display = 'none';
     } else {
-        // Внутренняя
         backBtn.style.display = 'flex';
         tg.BackButton.show();
         if (hasLogo) headerLogo.style.display = 'none';
@@ -200,6 +275,7 @@ function updateHeaderUI() {
 function renderCategories() {
     historyStack = [];
     isModalOpen = false;
+    document.body.classList.remove('no-scroll');
     updateHeaderUI();
     contentDiv.innerHTML = '';
     pageTitle.innerText = 'Меню';
@@ -266,7 +342,6 @@ function renderDishDetail(dish, parentCategory) {
         </div>
     `;
     
-    // Добавляем обработчик клика на картинку (если она есть)
     const imgElement = el.querySelector('.dish-image');
     if (imgElement && imgUrl) {
         imgElement.onclick = () => openModal(imgUrl);
@@ -276,17 +351,14 @@ function renderDishDetail(dish, parentCategory) {
 }
 
 function goBack() {
-    // 1. Если открыто модальное окно — закрываем его
     if (isModalOpen) {
         closeModal();
         return;
     }
-    // 2. Если открыт поиск — закрываем поиск
     if (isSearchActive) {
         closeSearch();
         return;
     }
-    // 3. Иначе идем назад по истории
     if (historyStack.length > 0) {
         const previousAction = historyStack.pop();
         previousAction();
