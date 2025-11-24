@@ -11,16 +11,12 @@ body {
     background-color: var(--tg-theme-bg-color, #fff);
     color: var(--tg-theme-text-color, #000);
     padding-bottom: 20px;
-    /* Важно для работы зума: */
     touch-action: pan-y; 
 }
 
-/* Блокировка прокрутки фона, когда открыто фото */
+/* Блокировка прокрутки фона */
 body.no-scroll {
     overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
 }
 
 /* Шапка */
@@ -63,7 +59,6 @@ h1 {
     color: var(--tg-theme-text-color, #000); 
 }
 
-/* Логотип */
 .header-logo {
     width: 32px;
     height: 32px;
@@ -175,7 +170,7 @@ h1 {
     color: var(--tg-theme-hint-color, #999);
 }
 
-/* --- МОДАЛЬНОЕ ОКНО (ЗУМ ФОТО) --- */
+/* --- МОДАЛЬНОЕ ОКНО --- */
 .image-modal {
     position: fixed;
     z-index: 1000;
@@ -188,27 +183,25 @@ h1 {
     align-items: center;
     justify-content: center;
     overflow: hidden; 
-    touch-action: none; 
+}
+
+/* Обертка для Panzoom */
+.panzoom-parent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
 .modal-content {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    
-    /* ОПТИМИЗАЦИЯ ДЛЯ ПЛАВНОСТИ */
-    transform-origin: 0 0; /* Важно: считаем координаты от левого верхнего угла */
-    will-change: transform; /* Подсказка браузеру готовить видеокарту */
-    backface-visibility: hidden; /* Убирает мерцание */
-}
-
-/* Класс для плавного возврата (пружина) */
-.animating {
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .modal-close {
-    /* ... (твой старый код кнопки закрытия) ... */
     position: absolute;
     top: 20px;
     right: 25px;
