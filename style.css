@@ -183,25 +183,32 @@ h1 {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: #000; /* Чисто черный фон */
+    background-color: #000; 
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden; /* Скрываем вылезающие части картинки */
-    touch-action: none; /* Отключаем стандартные жесты браузера */
+    overflow: hidden; 
+    touch-action: none; 
 }
 
 .modal-content {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    /* Важно для зума: */
-    transform-origin: center center;
-    transition: transform 0.1s linear; /* Плавность для жестов */
-    will-change: transform;
+    
+    /* ОПТИМИЗАЦИЯ ДЛЯ ПЛАВНОСТИ */
+    transform-origin: 0 0; /* Важно: считаем координаты от левого верхнего угла */
+    will-change: transform; /* Подсказка браузеру готовить видеокарту */
+    backface-visibility: hidden; /* Убирает мерцание */
+}
+
+/* Класс для плавного возврата (пружина) */
+.animating {
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .modal-close {
+    /* ... (твой старый код кнопки закрытия) ... */
     position: absolute;
     top: 20px;
     right: 25px;
