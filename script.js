@@ -7,7 +7,7 @@ const pageTitle = document.getElementById('page-title');
 const backBtn = document.getElementById('back-btn');
 const searchBtn = document.getElementById('search-btn');
 const headerSpacer = document.getElementById('header-spacer');
-// Добавляем элемент логотипа
+// Элемент логотипа
 const headerLogo = document.getElementById('header-logo');
 
 // Элементы поиска
@@ -22,12 +22,10 @@ let isSearchActive = false; // Флаг, активен ли поиск
 // --- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ЖИРНОГО ТЕКСТА ---
 function formatText(text) {
     if (!text) return '';
-    // 1. Меняем переносы строк из Excel/GoogleSheets на HTML переносы <br>
+    // 1. Меняем переносы строк на <br>
     let formatted = text.replace(/\n/g, '<br>');
-    
-    // 2. Меняем текст внутри звездочек *текст* на жирный <b>текст</b>
+    // 2. Меняем *текст* на жирный <b>текст</b>
     formatted = formatted.replace(/\*(.*?)\*/g, '<b>$1</b>');
-    
     return formatted;
 }
 
@@ -37,27 +35,55 @@ function loadMenu() {
         contentDiv.innerHTML = '<div style="color:red; text-align:center;">Ошибка: config.js не найден.</div>';
         return;
     }
-    contentDiv.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Загрузка меню...</div>';
+
+    // 1. Рисуем начальное состояние загрузки
+    contentDiv.innerHTML = '<div id="loading-text" style="text-align:center; padding:20px; color:#999; font-weight:500; font-size:16px;">Загрузка меню 0%</div>';
+    
+    const loadingText = document.getElementById('loading-text');
+    let loadedCount = 0;
+    const totalCount = CATEGORIES_CONFIG.length;
+
+    // Функция, которая обновляет проценты на экране
+    const updateProgress = () => {
+        loadedCount++;
+        // Считаем процент (округляем до целого)
+        let percent = Math.floor((loadedCount / totalCount) * 100);
+        // На всякий случай ограничиваем 100%, чтобы не было 101%
+        if (percent > 100) percent = 100;
+        
+        if (loadingText) {
+            loadingText.innerText = `Загрузка меню ${percent}%`;
+        }
+    };
     
     const promises = CATEGORIES_CONFIG.map(cat => {
         return new Promise((resolve) => {
+            // Если URL пустой или заглушка
             if (!cat.url || cat.url.includes("ВСТАВЬТЕ")) {
+                // Все равно считаем прогресс, хоть файл и пустой
+                updateProgress();
                 resolve({ ...cat, items: [] }); 
                 return;
             }
+
             Papa.parse(cat.url, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
-                    // Чистим данные и приводим название к нижнему регистру для поиска
+                    // Парсинг успешен
                     const validItems = results.data.filter(item => item.name && item.name.trim() !== '').map(item => ({
                         ...item,
-                        searchName: item.name.toLowerCase() // для быстрого поиска
+                        searchName: item.name.toLowerCase() 
                     }));
+                    
+                    // ОБНОВЛЯЕМ ПРОЦЕНТЫ
+                    updateProgress();
                     resolve({ id: cat.id, title: cat.title, items: validItems });
                 },
                 error: function() {
+                    // Если ошибка загрузки — тоже обновляем прогресс (чтобы не зависло)
+                    updateProgress();
                     resolve({ ...cat, items: [] });
                 }
             });
@@ -66,7 +92,11 @@ function loadMenu() {
 
     Promise.all(promises).then(loadedCategories => {
         menuData = loadedCategories;
-        renderCategories();
+        
+        // Делаем маленькую паузу (200мс), чтобы пользователь успел увидеть "100%"
+        setTimeout(() => {
+            renderCategories();
+        }, 200);
     });
 }
 
@@ -88,7 +118,7 @@ function closeSearch() {
     isSearchActive = false;
     if (historyStack.length === 0) renderCategories();
     else {
-        renderCategories(); // Возвращаемся в категории при закрытии
+        renderCategories(); 
     }
 }
 
@@ -137,25 +167,22 @@ function performSearch(query) {
 // --- НАВИГАЦИЯ ---
 
 function updateHeaderUI() {
-    // Проверка, есть ли логотип (на случай если HTML еще не обновился)
     const hasLogo = !!headerLogo;
 
     if (historyStack.length === 0) {
-        // --- ГЛАВНАЯ СТРАНИЦА ---
+        // Главная
         backBtn.style.display = 'none';
         tg.BackButton.hide();
         
-        // Показываем логотип
         if (hasLogo) headerLogo.style.display = 'block';
 
         searchBtn.style.display = 'flex';
         headerSpacer.style.display = 'none';
     } else {
-        // --- ВНУТРЕННИЕ СТРАНИЦЫ ---
+        // Внутренняя
         backBtn.style.display = 'flex';
         tg.BackButton.show();
         
-        // Скрываем логотип
         if (hasLogo) headerLogo.style.display = 'none';
         
         searchBtn.style.display = 'none'; 
@@ -201,7 +228,6 @@ function renderDishes(category) {
 }
 
 function renderDishDetail(dish, parentCategory) {
-    // Навигация
     if (historyStack.length === 0) {
         historyStack.push(() => renderCategories());
     } else {
@@ -217,7 +243,6 @@ function renderDishDetail(dish, parentCategory) {
     const imgUrl = dish.image ? (IMAGE_PATH_PREFIX + dish.image) : null;
     const imgHTML = imgUrl ? `<img src="${imgUrl}" class="dish-image" alt="${dish.name}">` : '';
 
-    // Применяем форматирование текста (превращаем *текст* в жирный)
     const ingredients = formatText(dish.ingredients);
     const recipe = formatText(dish.recipe);
 
