@@ -1,49 +1,40 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// Элементы
 const contentDiv = document.getElementById('content');
 const pageTitle = document.getElementById('page-title');
 const backBtn = document.getElementById('back-btn');
 const searchBtn = document.getElementById('search-btn');
 const headerSpacer = document.getElementById('header-spacer');
-// Элемент логотипа
 const headerLogo = document.getElementById('header-logo');
 
-// Элементы поиска
 const searchContainer = document.getElementById('search-container');
 const searchInput = document.getElementById('search-input');
 const searchClose = document.getElementById('search-close');
 
 let menuData = [];
 let historyStack = [];
-let isSearchActive = false; // Флаг, активен ли поиск
+let isSearchActive = false;
 
-// --- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ЖИРНОГО ТЕКСТА ---
 function formatText(text) {
     if (!text) return '';
-    // 1. Меняем переносы строк на <br>
     let formatted = text.replace(/\n/g, '<br>');
-    // 2. Меняем *текст* на жирный <b>текст</b>
     formatted = formatted.replace(/\*(.*?)\*/g, '<b>$1</b>');
     return formatted;
 }
 
-// --- ЗАГРУЗКА ---
 function loadMenu() {
     if (typeof CATEGORIES_CONFIG === 'undefined') {
         contentDiv.innerHTML = '<div style="color:red; text-align:center;">Ошибка: config.js не найден.</div>';
         return;
     }
 
-    // 1. Рисуем начальное состояние загрузки
     contentDiv.innerHTML = '<div id="loading-text" style="text-align:center; padding:20px; color:#999; font-weight:500; font-size:16px;">Загрузка меню 0%</div>';
     
     const loadingText = document.getElementById('loading-text');
     let loadedCount = 0;
     const totalCount = CATEGORIES_CONFIG.length;
 
-    // Функция, которая обновляет проценты на экране
     const updateProgress = () => {
         loadedCount++;
         // Считаем процент (округляем до целого)
@@ -58,9 +49,7 @@ function loadMenu() {
     
     const promises = CATEGORIES_CONFIG.map(cat => {
         return new Promise((resolve) => {
-            // Если URL пустой или заглушка
             if (!cat.url || cat.url.includes("ВСТАВЬТЕ")) {
-                // Все равно считаем прогресс, хоть файл и пустой
                 updateProgress();
                 resolve({ ...cat, items: [] }); 
                 return;
@@ -71,18 +60,15 @@ function loadMenu() {
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
-                    // Парсинг успешен
                     const validItems = results.data.filter(item => item.name && item.name.trim() !== '').map(item => ({
                         ...item,
                         searchName: item.name.toLowerCase() 
                     }));
                     
-                    // ОБНОВЛЯЕМ ПРОЦЕНТЫ
                     updateProgress();
                     resolve({ id: cat.id, title: cat.title, items: validItems });
                 },
                 error: function() {
-                    // Если ошибка загрузки — тоже обновляем прогресс (чтобы не зависло)
                     updateProgress();
                     resolve({ ...cat, items: [] });
                 }
@@ -93,23 +79,19 @@ function loadMenu() {
     Promise.all(promises).then(loadedCategories => {
         menuData = loadedCategories;
         
-        // Делаем маленькую паузу (200мс), чтобы пользователь успел увидеть "100%"
         setTimeout(() => {
             renderCategories();
         }, 200);
     });
 }
 
-// --- ПОИСК ---
 
-// Открыть поиск
 searchBtn.addEventListener('click', () => {
     searchContainer.style.display = 'flex';
     searchInput.focus();
     isSearchActive = true;
 });
 
-// Закрыть поиск
 searchClose.addEventListener('click', closeSearch);
 
 function closeSearch() {
@@ -122,7 +104,6 @@ function closeSearch() {
     }
 }
 
-// Ввод текста
 searchInput.addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase().trim();
     if (query.length === 0) {
@@ -164,13 +145,11 @@ function performSearch(query) {
     }
 }
 
-// --- НАВИГАЦИЯ ---
 
 function updateHeaderUI() {
     const hasLogo = !!headerLogo;
 
     if (historyStack.length === 0) {
-        // Главная
         backBtn.style.display = 'none';
         tg.BackButton.hide();
         
@@ -179,7 +158,6 @@ function updateHeaderUI() {
         searchBtn.style.display = 'flex';
         headerSpacer.style.display = 'none';
     } else {
-        // Внутренняя
         backBtn.style.display = 'flex';
         tg.BackButton.show();
         
@@ -276,5 +254,6 @@ function goBack() {
 
 backBtn.addEventListener('click', goBack);
 tg.BackButton.onClick(goBack);
+
 
 loadMenu();
