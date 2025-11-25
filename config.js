@@ -1,9 +1,5 @@
-// --- ФАЙЛ НАСТРОЕК ---
-
-// Папка с картинками на GitHub
 const IMAGE_PATH_PREFIX = "img/";
 
-// ВНИМАНИЕ: Вставьте ваши ссылки внутри кавычек url: "..."
 const CATEGORIES_CONFIG = [
 	{ 
         id: 'wok', 
@@ -65,4 +61,5 @@ const CATEGORIES_CONFIG = [
         title: 'Десерты', 
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYDhiayFH1EMnQmU1IwcU6VMMf8oZwdm5BN_gfBBUOvjzmIoQ32wdwrhuL4q_vzFg3cT5l1gH7BKrb/pub?gid=1290067053&single=true&output=csv" 
     }
+
 ];
